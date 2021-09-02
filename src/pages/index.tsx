@@ -1,5 +1,10 @@
 import { GetStaticProps } from 'next';
+import Head from 'next/head';
+import Link from 'next/link';
 import Prismic from '@prismicio/client';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { FiCalendar, FiUser } from 'react-icons/fi';
 
 import { getPrismicClient } from '../services/prismic';
 
@@ -25,15 +30,46 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home(): JSX.Element {
-  return <h1>Hello World!</h1>;
+export default function Home({ postsPagination }: HomeProps): JSX.Element {
+  return (
+    <>
+      <Head>
+        <title>Posts | spaceTraveling</title>
+      </Head>
+
+      <main className={styles.PostsContainer}>
+        <div className={styles.posts}>
+          {postsPagination.results.map(post => (
+            <Link key={post.uid} href={`/posts/${post.uid}`}>
+              <a>
+                <strong>{post.data.title}</strong>
+                <p>{post.data.subtitle}</p>
+                <div className="postDetails">
+                  <span>
+                    <FiCalendar />
+                    {post.first_publication_date}
+                  </span>
+                  <span>
+                    <FiUser />
+                    {post.data.author}
+                  </span>
+                </div>
+              </a>
+            </Link>
+          ))}
+        </div>
+      </main>
+    </>
+  );
 }
 
 export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
+
   const response = await prismic.query(
     Prismic.Predicates.at('document.type', 'post'),
     {
+      pageSize: 2,
       fetch: [
         'post.title',
         'post.subtitle',
@@ -44,7 +80,28 @@ export const getStaticProps: GetStaticProps = async () => {
     }
   );
 
+  const posts = response.results.map(post => ({
+    uid: post.uid,
+    first_publication_date: format(
+      new Date(post.first_publication_date),
+      'dd MMM y',
+      {
+        locale: ptBR,
+      }
+    ),
+    data: {
+      title: post.data.title,
+      subtitle: post.data.subtitle,
+      author: post.data.author,
+    },
+  }));
+
   return {
-    props: {},
+    props: {
+      postsPagination: {
+        next_page: response.next_page,
+        results: posts,
+      },
+    },
   };
 };

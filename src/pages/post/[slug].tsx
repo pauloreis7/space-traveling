@@ -1,4 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 import { getPrismicClient } from '../../services/prismic';
 
@@ -26,20 +28,11 @@ interface PostProps {
   post: Post;
 }
 
-// export default function Post() {
-//   // TODO
-// }
+export default function Post(): JSX.Element {}
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient();
-//   const posts = await prismic.query(TODO);
+export const getStaticPaths: GetStaticPaths = async () => {
+  // const prismic = getPrismicClient();
+  // const posts = await prismic.query(TODO);
+};
 
-//   // TODO
-// };
-
-// export const getStaticProps = async context => {
-//   const prismic = getPrismicClient();
-//   const response = await prismic.getByUID(TODO);
-
-//   // TODO
-// };
+export const getStaticProps: GetStaticProps = async ({ params }) => {};

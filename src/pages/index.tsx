@@ -1,4 +1,5 @@
 import { GetStaticProps } from 'next';
+import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Prismic from '@prismicio/client';
@@ -31,6 +32,36 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination }: HomeProps): JSX.Element {
+  const [posts, setPosts] = useState<Post[]>(postsPagination.results);
+  const [nextPage, setNextPage] = useState<string | null>(
+    postsPagination.next_page
+  );
+  async function handleAddPost(): Promise<void> {
+    const response = await fetch(nextPage);
+    const { results, next_page } = await response.json();
+
+    const newPosts = results.map(post => {
+      return {
+        uid: post.uid,
+        first_publication_date: format(
+          new Date(post.first_publication_date),
+          'dd MMM y',
+          {
+            locale: ptBR,
+          }
+        ),
+        data: {
+          title: post.data.title,
+          subtitle: post.data.subtitle,
+          author: post.data.author,
+        },
+      };
+    });
+
+    setNextPage(next_page);
+    setPosts([...posts, ...newPosts]);
+  }
+
   return (
     <>
       <Head>
@@ -39,8 +70,8 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
 
       <main className={styles.PostsContainer}>
         <div className={styles.posts}>
-          {postsPagination.results.map(post => (
-            <Link key={post.uid} href={`/posts/${post.uid}`}>
+          {posts.map(post => (
+            <Link key={post.uid} href={`/post/${post.uid}`}>
               <a>
                 <strong>{post.data.title}</strong>
                 <p>{post.data.subtitle}</p>
@@ -57,7 +88,11 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
               </a>
             </Link>
           ))}
-          <button type="button">Carregar mais posts</button>
+          {nextPage && (
+            <button type="button" onClick={handleAddPost}>
+              Carregar mais posts
+            </button>
+          )}
         </div>
       </main>
     </>

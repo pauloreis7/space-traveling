@@ -5,11 +5,13 @@ import styles from './header.module.scss';
 export default function Header(): JSX.Element {
   return (
     <header className={styles.headerContainer}>
-      <Link href="/">
-        <a>
-          <img src="/images/logo.svg" alt="logo" />
-        </a>
-      </Link>
+      <div className={styles.headerContent}>
+        <Link href="/">
+          <a>
+            <img src="/images/logo.svg" alt="logo" />
+          </a>
+        </Link>
+      </div>
     </header>
   );
 }

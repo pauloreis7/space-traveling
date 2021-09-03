@@ -44,7 +44,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
               <a>
                 <strong>{post.data.title}</strong>
                 <p>{post.data.subtitle}</p>
-                <div className="postDetails">
+                <div className={styles.postDetails}>
                   <span>
                     <FiCalendar />
                     {post.first_publication_date}
@@ -57,6 +57,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
               </a>
             </Link>
           ))}
+          <button type="button">Carregar mais posts</button>
         </div>
       </main>
     </>

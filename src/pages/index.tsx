@@ -32,10 +32,30 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination }: HomeProps): JSX.Element {
-  const [posts, setPosts] = useState<Post[]>(postsPagination.results);
+  const [posts, setPosts] = useState<Post[]>(() => {
+    const postsFormatted = postsPagination.results.map(post => ({
+      uid: post.uid,
+      first_publication_date: format(
+        new Date(post.first_publication_date),
+        'dd MMM y',
+        {
+          locale: ptBR,
+        }
+      ),
+      data: {
+        title: post.data.title,
+        subtitle: post.data.subtitle,
+        author: post.data.author,
+      },
+    }))
+
+    return postsFormatted
+  });
+
   const [nextPage, setNextPage] = useState<string | null>(
     postsPagination.next_page
   );
+  
   async function handleAddPost(): Promise<void> {
     const response = await fetch(nextPage);
     const { results, next_page } = await response.json();
@@ -118,13 +138,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   const posts = response.results.map(post => ({
     uid: post.uid,
-    first_publication_date: format(
-      new Date(post.first_publication_date),
-      'dd MMM y',
-      {
-        locale: ptBR,
-      }
-    ),
+    first_publication_date: post.first_publication_date,
     data: {
       title: post.data.title,
       subtitle: post.data.subtitle,

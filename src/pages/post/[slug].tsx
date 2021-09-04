@@ -1,4 +1,5 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
+import { useRouter } from 'next/router'
 import Head from 'next/head';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,9 +13,11 @@ import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 
 interface Post {
+  uid: string;
   first_publication_date: string | null;
   data: {
     title: string;
+    subtitle: string;
     banner: {
       url: string;
     };
@@ -26,20 +29,50 @@ interface Post {
       }[];
     }[];
   };
+  timeToRead: string;
 }
 
 interface PostProps {
   post: Post;
-  timeToRead: number;
 }
 
-export default function Post({ post, timeToRead }: PostProps): JSX.Element {
+export default function Post({post}: PostProps): JSX.Element {
+  const router = useRouter()
+
+  if(router.isFallback) {
+    return <strong>Carregando...</strong>
+  }
+
   const postContent = post.data.content.map(currentContent => ({
     heading: currentContent.heading,
     body: RichText.asHtml(currentContent.body),
   }));
 
-  return post ? (
+  const formattedDate = format(
+    new Date(post.first_publication_date),
+    'dd MMM y',
+    {
+      locale: ptBR,
+    }
+  )
+  
+  const contentStringsArray = post.data.content.reduce(
+    (accumulator, currentContent) => {
+      const headingStringsArray = currentContent.heading.split(' ');
+      const bodyStringsArray = RichText.asText(currentContent.body).split(' ');
+
+      const currentContentStringsArray = [
+        ...headingStringsArray,
+        ...bodyStringsArray,
+      ];
+
+      return [...accumulator, ...currentContentStringsArray];
+    },
+    []
+  );
+  const timeToRead = Math.ceil(contentStringsArray.length / 200);
+
+  return (
     <>
       <Head>
         <title>{post.data.title} | spaceTraveling</title>
@@ -58,7 +91,7 @@ export default function Post({ post, timeToRead }: PostProps): JSX.Element {
           <div className={commonStyles.postDetails}>
             <span>
               <FiCalendar />
-              {post.first_publication_date}
+              {formattedDate}
             </span>
 
             <span>
@@ -82,8 +115,6 @@ export default function Post({ post, timeToRead }: PostProps): JSX.Element {
         </article>
       </main>
     </>
-  ) : (
-    <strong>Carregando...</strong>
   );
 }
 
@@ -120,15 +151,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const response = await prismic.getByUID('post', String(slug), {});
 
   const post = {
-    first_publication_date: format(
-      new Date(response.first_publication_date),
-      'dd MMM y',
-      {
-        locale: ptBR,
-      }
-    ),
+    uid: response.uid,
+    first_publication_date: response.first_publication_date,
     data: {
       title: response.data.title,
+      subtitle: response.data.subtitle,
       banner: {
         url: response.data.banner.url,
       },
@@ -137,26 +164,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     },
   };
 
-  const contentStringsArray = response.data.content.reduce(
-    (accumulator, currentContent) => {
-      const headingStringsArray = currentContent.heading.split(' ');
-      const bodyStringsArray = RichText.asText(currentContent.body).split(' ');
-
-      const currentContentStringsArray = [
-        ...headingStringsArray,
-        ...bodyStringsArray,
-      ];
-
-      return [...accumulator, ...currentContentStringsArray];
-    },
-    []
-  );
-  const timeToRead = Math.ceil(contentStringsArray.length / 200);
-
   return {
     props: {
-      post,
-      timeToRead,
+      post
     },
     revalidate: 60 * 60 * 24,
   };

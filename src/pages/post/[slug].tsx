@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,11 +37,31 @@ interface PostProps {
   post: Post;
 }
 
-export default function Post({post}: PostProps): JSX.Element {
-  const router = useRouter()
+export default function Post({ post }: PostProps): JSX.Element {
+  const router = useRouter();
 
-  if(router.isFallback) {
-    return <strong>Carregando...</strong>
+  useEffect(() => {
+    const scriptParentNode = document.getElementById(
+      'inject-comments-for-uterances'
+    );
+    if (!scriptParentNode) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://utteranc.es/client.js';
+    script.async = true;
+    script.setAttribute('repo', 'pauloreis7/space-traveling');
+    script.setAttribute('issue-term', 'pathname');
+    script.setAttribute('label', 'comment :speech_balloon:');
+    script.setAttribute('theme', 'photon-dark');
+    script.setAttribute('crossorigin', 'anonymous');
+
+    scriptParentNode.appendChild(script);
+
+    // scriptParentNode.removeChild(scriptParentNode.firstChild as Node);
+  }, []);
+
+  if (router.isFallback) {
+    return <strong>Carregando...</strong>;
   }
 
   const postContent = post.data.content.map(currentContent => ({
@@ -54,8 +75,8 @@ export default function Post({post}: PostProps): JSX.Element {
     {
       locale: ptBR,
     }
-  )
-  
+  );
+
   const contentStringsArray = post.data.content.reduce(
     (accumulator, currentContent) => {
       const headingStringsArray = currentContent.heading.split(' ');
@@ -112,6 +133,8 @@ export default function Post({post}: PostProps): JSX.Element {
               <div dangerouslySetInnerHTML={{ __html: content.body }} />
             </section>
           ))}
+
+          <div id="inject-comments-for-uterances" />
         </article>
       </main>
     </>
@@ -166,7 +189,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   return {
     props: {
-      post
+      post,
     },
     revalidate: 60 * 60 * 24,
   };

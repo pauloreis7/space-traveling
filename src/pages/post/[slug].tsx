@@ -1,8 +1,10 @@
 import { GetStaticPaths, GetStaticProps } from 'next';
+import Head from 'next/head';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { RichText } from 'prismic-dom';
 import Prismic from '@prismicio/client';
+import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
 
 import { getPrismicClient } from '../../services/prismic';
 
@@ -32,7 +34,55 @@ interface PostProps {
 }
 
 export default function Post({ post, timeToRead }: PostProps): JSX.Element {
-  return <h1>Hi :D</h1>;
+  const postContent = post.data.content.map(currentContent => ({
+    heading: currentContent.heading,
+    body: RichText.asHtml(currentContent.body),
+  }));
+
+  return (
+    <>
+      <Head>
+        <title>{post.data.title} | spaceTraveling</title>
+      </Head>
+
+      <img src={post.data.banner.url} alt={post.data.title} />
+
+      <main className={styles.PostContainer}>
+        <article className={styles.post}>
+          <h1>{post.data.title}</h1>
+
+          <div className={styles.postDetails}>
+            <span>
+              <FiCalendar />
+              {post.first_publication_date}
+            </span>
+
+            <span>
+              <FiUser />
+              {post.data.author}
+            </span>
+
+            <span>
+              <FiClock />
+              {timeToRead} min
+            </span>
+          </div>
+
+          {postContent.map(content => (
+            <>
+              <h2>{content.heading}</h2>
+
+              <div
+                key={content.heading}
+                className={styles.postContent}
+                dangerouslySetInnerHTML={{ __html: content.body }}
+              />
+            </>
+          ))}
+        </article>
+      </main>
+    </>
+  );
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -81,10 +131,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         url: response.data.banner.url,
       },
       author: response.data.author,
-      content: response.data.content.map(currentContent => ({
-        heading: currentContent.heading,
-        body: RichText.asHtml(currentContent.body),
-      })),
+      content: response.data.content,
     },
   };
 

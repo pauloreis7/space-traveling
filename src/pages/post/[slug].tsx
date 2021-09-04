@@ -39,19 +39,23 @@ export default function Post({ post, timeToRead }: PostProps): JSX.Element {
     body: RichText.asHtml(currentContent.body),
   }));
 
-  return (
+  return post ? (
     <>
       <Head>
         <title>{post.data.title} | spaceTraveling</title>
       </Head>
 
-      <img src={post.data.banner.url} alt={post.data.title} />
+      <img
+        src={post.data.banner.url}
+        alt={post.data.title}
+        className={styles.postImage}
+      />
 
       <main className={styles.PostContainer}>
         <article className={styles.post}>
           <h1>{post.data.title}</h1>
 
-          <div className={styles.postDetails}>
+          <div className={commonStyles.postDetails}>
             <span>
               <FiCalendar />
               {post.first_publication_date}
@@ -69,19 +73,17 @@ export default function Post({ post, timeToRead }: PostProps): JSX.Element {
           </div>
 
           {postContent.map(content => (
-            <>
+            <section key={content.heading} className={styles.postSection}>
               <h2>{content.heading}</h2>
 
-              <div
-                key={content.heading}
-                className={styles.postContent}
-                dangerouslySetInnerHTML={{ __html: content.body }}
-              />
-            </>
+              <div dangerouslySetInnerHTML={{ __html: content.body }} />
+            </section>
           ))}
         </article>
       </main>
     </>
+  ) : (
+    <strong>Carregando...</strong>
   );
 }
 

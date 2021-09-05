@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 
+import { useRouter } from 'next/router';
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
@@ -29,9 +30,13 @@ interface PostPagination {
 
 interface HomeProps {
   postsPagination: PostPagination;
+  preview: boolean;
 }
 
-export default function Home({ postsPagination }: HomeProps): JSX.Element {
+export default function Home({
+  postsPagination,
+  preview,
+}: HomeProps): JSX.Element {
   const [posts, setPosts] = useState<Post[]>(() => {
     const postsFormatted = postsPagination.results.map(post => ({
       uid: post.uid,
@@ -47,15 +52,15 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
         subtitle: post.data.subtitle,
         author: post.data.author,
       },
-    }))
+    }));
 
-    return postsFormatted
+    return postsFormatted;
   });
 
   const [nextPage, setNextPage] = useState<string | null>(
     postsPagination.next_page
   );
-  
+
   async function handleAddPost(): Promise<void> {
     const response = await fetch(nextPage);
     const { results, next_page } = await response.json();
@@ -115,17 +120,29 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
           )}
         </div>
       </main>
+
+      {preview && (
+        <aside>
+          <Link href="/api/exit-preview">
+            <a>Sair do modo Preview</a>
+          </Link>
+        </aside>
+      )}
     </>
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({
+  preview = false,
+  previewData,
+}) => {
   const prismic = getPrismicClient();
 
   const response = await prismic.query(
     Prismic.Predicates.at('document.type', 'post'),
     {
       pageSize: 2,
+      ref: previewData?.ref ?? null,
       fetch: [
         'post.title',
         'post.subtitle',
@@ -152,6 +169,7 @@ export const getStaticProps: GetStaticProps = async () => {
         next_page: response.next_page,
         results: posts,
       },
+      preview,
     },
   };
 };

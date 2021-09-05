@@ -16,6 +16,7 @@ import styles from './post.module.scss';
 interface Post {
   uid: string;
   first_publication_date: string | null;
+  last_publication_date: string | null;
   data: {
     title: string;
     subtitle: string;
@@ -77,6 +78,14 @@ export default function Post({ post }: PostProps): JSX.Element {
     }
   );
 
+  const formattedLastDate = format(
+    new Date(post.last_publication_date),
+    "'* editado em 'dd MMM y', às 'HH':'mm",
+    {
+      locale: ptBR,
+    }
+  );
+
   const contentStringsArray = post.data.content.reduce(
     (accumulator, currentContent) => {
       const headingStringsArray = currentContent.heading.split(' ');
@@ -105,7 +114,7 @@ export default function Post({ post }: PostProps): JSX.Element {
         className={styles.postImage}
       />
 
-      <main className={styles.PostContainer}>
+      <main className={styles.postContainer}>
         <article className={styles.post}>
           <h1>{post.data.title}</h1>
 
@@ -125,14 +134,17 @@ export default function Post({ post }: PostProps): JSX.Element {
               {timeToRead} min
             </span>
           </div>
+          <p>{formattedLastDate}</p>
 
-          {postContent.map(content => (
-            <section key={content.heading} className={styles.postSection}>
-              <h2>{content.heading}</h2>
+          <div>
+            {postContent.map(content => (
+              <section key={content.heading} className={styles.postSection}>
+                <h2>{content.heading}</h2>
 
-              <div dangerouslySetInnerHTML={{ __html: content.body }} />
-            </section>
-          ))}
+                <div dangerouslySetInnerHTML={{ __html: content.body }} />
+              </section>
+            ))}
+          </div>
 
           <div id="inject-comments-for-uterances" />
         </article>
@@ -176,6 +188,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const post = {
     uid: response.uid,
     first_publication_date: response.first_publication_date,
+    last_publication_date: response.last_publication_date,
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
